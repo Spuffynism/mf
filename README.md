@@ -8,7 +8,7 @@ list-files:
   ls
 > mf list-files -al
 ls -al
-// runs recipe with flag 
+// runs `list-files`'s `ls` recipe with `-al` flag 
 ```
 
 ## Installation
