@@ -1,13 +1,13 @@
-# mf
+# 🪱 mf
 
 Wire flags to makefile targets
 
 ```shell
 > cat Makefile
-run:
-  cargo run
-> mf run --flag
-cargo run --flag
+list-files:
+  ls
+> mf list-files -al
+ls -al
 // runs recipe with flag 
 ```
 

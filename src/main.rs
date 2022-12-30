@@ -1,51 +1,14 @@
-use std::process::Command;
+mod recipe;
+mod config;
 
-const FLAG_START: &str = "-";
+use anyhow::Result;
+use crate::recipe::Recipe;
+use crate::config::Config;
 
-fn parse_args(args: &[String]) -> (Vec<&str>, Vec<&str>) {
-    let is_a_flag = |arg: &&String| arg.starts_with(FLAG_START);
+fn main() -> Result<()> {
+    let args: Vec<String> = std::env::args().collect();
+    let config: Config = Config::new(&args[1..]);
 
-    let args_without_callee = &args[1..];
-
-    let steps: Vec<_> = args_without_callee.iter()
-        .filter(|arg| !is_a_flag(arg))
-        .map(AsRef::as_ref)
-        .collect();
-    let flags: Vec<_> = args_without_callee.iter()
-        .filter(is_a_flag)
-        .map(AsRef::as_ref)
-        .collect();
-
-    (steps, flags)
-}
-
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let args: Vec<_> = std::env::args().collect();
-    let (steps, mut flags) = parse_args(&args[..]);
-
-    let make = Command::new("make")
-        .args(steps)
-        .arg("--just-print")
-        .output()?;
-
-    let recipe = String::from_utf8_lossy(&make.stdout).to_string();
-
-    if recipe.trim().is_empty() {
-        println!("{}", String::from_utf8_lossy(&make.stderr).to_string().trim());
-        return Ok(())
-    }
-
-    let mut modified_recipe = vec![recipe.trim()];
-    modified_recipe.append(&mut flags);
-
-    let sh = Command::new("sh")
-        .arg("-c")
-        .arg(modified_recipe.join(" "))
-        .output()?;
-
-    let output_bytes = if sh.status.success() { &sh.stdout } else { &sh.stderr };
-    let output = String::from_utf8_lossy(&output_bytes).to_string();
-    println!("{}", output.trim());
-
-    return Ok(())
+    let recipe = Recipe::parse(config.step.clone())?;
+    recipe.execute(&config.flags[..])
 }
